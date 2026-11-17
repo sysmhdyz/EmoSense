@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1E293B">
+<title>EmoSense AI</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="phone">
+  <header class="topbar">
+    <div class="logo" aria-hidden="true">E</div>
+    <h1>EmoSense AI</h1>
+  </header>
+
+  <main class="content">
+    <!-- Vista 1: Analizador -->
+    <section id="view-analyzer" class="view active">
+      <label for="txt" class="field-label">¿Qué quieres analizar?</label>
+      <textarea id="txt" maxlength="600" rows="5" placeholder="Escribe o pega un mensaje en español…"></textarea>
+      <div class="meta-row"><span id="count">0 / 600</span></div>
+      <p class="field-label small">Prueba un ejemplo</p>
+      <div class="chips" id="chips">
+        <button class="chip" data-t="¡Estoy muy feliz! Por fin logré mi meta y quiero celebrar con todos.">😄 Alegría</button>
+        <button class="chip" data-t="Me siento muy triste y solo, no dejo de llorar desde que te fuiste.">😢 Tristeza</button>
+        <button class="chip" data-t="¡Estoy furioso! Es una injusticia, me tienen harto con sus mentiras.">😠 Enojo</button>
+        <button class="chip" data-t="Tengo mucho miedo y estoy demasiado nervioso por el examen de mañana.">😰 Miedo</button>
+        <button class="chip" data-t="¡Wow! Es increíble, jamás imaginé algo tan inesperado.">😮 Sorpresa</button>
+        <button class="chip" data-t="Hoy tengo reunión de trabajo y debo enviar el informe del proyecto.">😐 Neutral</button>
+        <button class="chip" data-t="No estoy feliz, nunca me escuchan y ya no quiero seguir así.">🔁 Negación</button>
+      </div>
+      <div class="actions">
+        <button id="btnAnalyze" class="btn primary">Analizar Emoción</button>
+        <button id="btnClear" class="btn ghost">Limpiar</button>
+      </div>
+
+      <details class="ai-box" id="aiBox">
+        <summary>🤖 Motor de IA (opcional)</summary>
+        <p>Pega tu API key de Google Gemini (AIza…) o de Anthropic (sk-ant-…) para que la IA interprete cualquier texto. Se guarda solo en este navegador.</p>
+        <input id="aiKey" type="password" placeholder="AIza… o sk-ant-…" autocomplete="off">
+        <div class="ai-row"><button id="aiSave" class="btn ghost small">Guardar clave</button><button id="aiRemove" class="btn danger small">Quitar</button></div>
+        <p id="aiStatus" class="ai-status"></p>
+      </details>
+
+      <article id="result" class="result hidden" aria-live="polite">
+        <div class="res-head">
+          <div id="resEmoji" class="res-emoji">😐</div>
+          <div>
+            <div class="res-label">Emoción predominante</div>
+            <div id="resName" class="res-name">—</div>
+          </div>
+        </div>
+        <div class="bar-wrap"><div id="resBar" class="bar"></div></div>
+        <div class="bar-caption"><span>Confianza</span><strong id="resPct">0%</strong></div>
+        <h3 class="sub">Emociones secundarias</h3>
+        <ul id="resBreakdown" class="breakdown"></ul>
+        <div class="kb-box">
+          <h3>Recomendación del Sistema Basado en Conocimiento</h3>
+          <p id="kbDiag" class="kb-diag"></p>
+          <p id="kbRec" class="kb-rec"></p>
+          <p id="kbRules" class="kb-rules"></p>
+        </div>
+      </article>
+    </section>
+
+    <!-- Vista 2: Historial -->
+    <section id="view-history" class="view">
+      <div class="section-head">
+        <h2>Historial</h2>
+        <button id="btnDeleteAll" class="btn danger small">Borrar Historial</button>
+      </div>
+      <div id="historyList" class="history"></div>
+    </section>
+
+    <!-- Vista 3: Estadísticas -->
+    <section id="view-stats" class="view">
+      <h2>Estadísticas</h2>
+      <div class="stat-grid">
+        <div class="stat"><span>Análisis realizados</span><strong id="statTotal">0</strong></div>
+        <div class="stat"><span>Tu emoción predominante</span><strong id="statTop">—</strong></div>
+      </div>
+      <h3 class="sub">Frecuencia emocional</h3>
+      <div id="statBars" class="stat-bars"></div>
+    </section>
+  </main>
+
+  <nav class="tabbar" aria-label="Navegación principal">
+    <button class="tab active" data-view="analyzer">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20l4-1 11-11-3-3L5 16z"/><path d="M14 6l3 3"/></svg>Analizador</button>
+    <button class="tab" data-view="history">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Historial</button>
+    <button class="tab" data-view="stats">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 20V10M12 20V4M19 20v-7"/></svg>Estadísticas</button>
+  </nav>
+  <div id="toast" class="toast" role="alert"></div>
+</div>
+
+<script src="emotionAnalyzer.js"></script>
+<script src="knowledgeBase.js"></script>
+<script src="aiEngine.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
