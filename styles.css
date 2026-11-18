@@ -85,3 +85,10 @@ button:focus-visible{outline:3px solid var(--tristeza);outline-offset:2px}
 .ai-box input{width:100%;padding:10px;border:2px solid var(--slate-200);border-radius:12px;font:inherit}
 .ai-row{display:flex;gap:8px;margin-top:8px}
 .ai-status{font-weight:600}
+
+.feelings{display:flex;flex-wrap:wrap;gap:6px}
+.feel{padding:5px 11px;border-radius:99px;font-size:13px;font-weight:600;background:color-mix(in srgb,var(--c) 20%,white);color:var(--slate-900)}
+.ins-sit{font-size:13px;color:var(--slate-500);margin-top:8px}
+.ins-text{font-size:14px;line-height:1.55;color:var(--slate-700);margin-bottom:6px}
+.ins-list{padding-left:20px;display:grid;gap:6px;font-size:14px;line-height:1.45;color:var(--slate-700)}
+.risk{margin-top:14px;padding:12px 14px;border-radius:14px;background:#FEF3C7;border:1px solid #F59E0B;color:#78350F;font-size:14px;line-height:1.45}

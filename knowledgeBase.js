@@ -4,6 +4,31 @@ class KnowledgeBaseEngine {
     // Cada regla: id, IF (condición sobre el contexto), THEN (diagnóstico + recomendación).
     // Contexto: { primary, secondary, level: "baja"|"media"|"alta", confidence }
     // Las reglas se evalúan por prioridad: combinaciones específicas primero, generales después.
+    // Matices emocionales, situaciones y apoyos para el análisis profundo local (cuando no hay IA)
+    this.nuances = {
+      "Alegría": ["entusiasmo", "gratitud", "orgullo"], "Tristeza": ["desánimo", "soledad", "nostalgia"],
+      "Enojo": ["frustración", "impotencia", "molestia"], "Miedo / Ansiedad": ["preocupación", "inseguridad", "tensión"],
+      "Sorpresa": ["asombro", "desconcierto", "curiosidad"], "Neutral": ["calma", "indiferencia"]
+    };
+    this.needs = {
+      "Alegría": "compartir y celebrar con alguien", "Tristeza": "ser escuchado y sentirte acompañado",
+      "Enojo": "que se reconozca lo que te molestó y poner un límite claro", "Miedo / Ansiedad": "seguridad, información clara y un plan pequeño",
+      "Sorpresa": "tiempo para procesar lo ocurrido", "Neutral": "nada urgente; quizá expresar con más detalle cómo te sientes"
+    };
+    this.generic = {
+      "Alegría": "Guarda este momento: anota qué lo hizo posible para repetirlo.", "Tristeza": "Cuida lo básico hoy: dormir, comer y moverte un poco.",
+      "Enojo": "Mueve el cuerpo (una caminata corta) antes de responder.", "Miedo / Ansiedad": "Respira lento y enfócate en lo que sí está en tus manos.",
+      "Sorpresa": "Cuéntaselo a alguien para ordenar tus ideas.", "Neutral": "Si quieres, vuelve a escribir cómo te sientes con más detalle."
+    };
+    this.situations = [
+      { re: /trabaj|jefe|oficina|empleo|despid|sueldo/, label: "trabajo", ctx: "Parece que el contexto es laboral.", tip: "Separa los hechos de lo que interpretas y, si hace falta, pide una conversación a solas con tu jefe o equipo." },
+      { re: /escuela|examen|tarea|univers|profesor|calificaci|tesis/, label: "escuela o estudios", ctx: "Parece que el contexto son los estudios.", tip: "Divide la carga en tareas pequeñas con fechas y pide apoyo a un profesor o compañero." },
+      { re: /novi[oa]|pareja|espos[oa]|terminamos|rompimos|celos/, label: "pareja", ctx: "Parece que el contexto es una relación de pareja.", tip: "Habla desde lo que sientes («me sentí…») y elige un momento tranquilo, no en pleno enojo." },
+      { re: /mama|papa\b|madre|padre|hermano|familia|hij[oa]/, label: "familia", ctx: "Parece que el contexto es familiar.", tip: "Aclara qué necesitas de esa persona y qué límites quieres poner, con calma y sin reproches." },
+      { re: /amig|amistad/, label: "amistad", ctx: "Parece que el contexto es una amistad.", tip: "Cuéntale cómo te afectó y pregúntale su versión antes de sacar conclusiones." },
+      { re: /salud|enferm|doctor|diagnostic|hospital/, label: "salud", ctx: "Parece que el contexto es de salud.", tip: "Anota tus dudas y llévalas a tu médico; evita buscar respuestas solo en internet." },
+      { re: /dinero|deuda|renta|econom|pagar/, label: "dinero", ctx: "Parece que el contexto es económico.", tip: "Haz una lista de ingresos, gastos y pagos urgentes; ver los números reduce la ansiedad." }
+    ];
     this.rules = [
       // Regla 1: IF principal=Enojo AND secundaria=Tristeza THEN enojo que oculta dolor
       { id: 1, IF: c => c.primary === "Enojo" && c.secondary === "Tristeza",
@@ -71,6 +96,42 @@ class KnowledgeBaseEngine {
   static levelOf(confidence) {
     // Regla de intensidad: baja <45%, media 45-75%, alta >75%
     return confidence < 45 ? "baja" : confidence <= 75 ? "media" : "alta";
+  }
+
+  // Análisis profundo local: matices, situación, explicación, necesidad, apoyos y riesgo
+  deepen(r, text) {
+    const t = EmotionAnalyzer.normalize(text), lvl = KnowledgeBaseEngine.levelOf(r.confidence);
+    const feel = [...(this.nuances[r.primary] || [])];
+    if (r.secondary && this.nuances[r.secondary]) feel.push(this.nuances[r.secondary][0]);
+    const sit = this.situations.find(x => x.re.test(t));
+    const apoyo = [this.infer(r).recommendation];
+    if (sit) apoyo.push(sit.tip);
+    apoyo.push(this.generic[r.primary]);
+    const risk = /suicid|quitarme la vida|no quiero vivir|quiero morir|matarme|hacerme dano|acabar con todo/.test(t) ? "alto"
+      : /no puedo mas|sin salida|no vale la pena|ya no aguanto/.test(t) ? "moderado" : "ninguno";
+    return {
+      emociones: feel, situacion: sit ? sit.label : "",
+      explicacion: "Tu texto transmite " + r.primary.toLowerCase() + " con intensidad " + lvl +
+        (r.secondary ? ", con matices de " + r.secondary.toLowerCase() : "") + ". " + (sit ? sit.ctx : ""),
+      necesidad: this.needs[r.primary], apoyo, riesgo: risk
+    };
+  }
+
+  // Combina el análisis local con el de la IA: la IA manda en lo que aporte; el riesgo toma el nivel más alto
+  static merge(base, ai) {
+    if (!ai) return base;
+    const rank = { ninguno: 0, moderado: 1, alto: 2 };
+    const out = { ...base };
+    ["situacion", "explicacion", "necesidad"].forEach(k => { if (ai[k]) out[k] = ai[k]; });
+    ["emociones", "apoyo"].forEach(k => { if (ai[k] && ai[k].length) out[k] = ai[k]; });
+    out.riesgo = rank[ai.riesgo] > rank[base.riesgo] ? ai.riesgo : base.riesgo;
+    return out;
+  }
+
+  static riskMessage(level) {
+    if (level === "alto") return "Lo que escribes me preocupa. No tienes que pasar por esto solo: habla hoy con alguien de confianza. En México puedes llamar a la Línea de la Vida (800 911 2000, atención las 24 h) o al 911 si estás en peligro inmediato.";
+    if (level === "moderado") return "Parece que estás cargando mucho. Hablar con alguien de confianza o con un profesional de salud mental puede aliviar parte de esa carga.";
+    return "";
   }
 
   infer(result) {

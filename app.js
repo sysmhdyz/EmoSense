@@ -53,8 +53,10 @@
       toast("No se reconocieron palabras. Activa el motor de IA para mayor cobertura.");
     }
     btn.disabled = false; btn.textContent = "Analizar Emoción";
+    const base = kb.deepen(r, text);
+    const insight = KnowledgeBaseEngine.merge(base, source === "IA + léxico" ? ai.lastInsight : null);
     const k = kb.infer(r);
-    showResult(r, k, source);
+    showResult(r, k, source, insight);
     const list = load();
     list.unshift({ id: Date.now() + Math.random().toString(16).slice(2, 6), ts: Date.now(), text, primary: r.primary, confidence: r.confidence, color: r.color, emoji: r.emoji });
     save(list.slice(0, 200));
@@ -72,7 +74,7 @@
   });
   $("aiRemove").addEventListener("click", () => { ai.key = ""; aiStatus(); });
 
-  function showResult(r, k, source) {
+  function showResult(r, k, source, ins) {
     const card = $("result");
     card.classList.add("hidden"); void card.offsetWidth; card.classList.remove("hidden");
     card.style.setProperty("--c", r.color);
@@ -85,6 +87,13 @@
     $("resBreakdown").innerHTML = others.length
       ? others.map(b => `<li><span>${b.emoji} ${esc(b.name)}</span><div class="mini"><i style="width:${b.pct}%;background:${b.color}"></i></div><span>${b.pct}%</span></li>`).join("")
       : '<li style="display:block;color:#64748B">No se detectaron otras emociones.</li>';
+    $("insFeelings").innerHTML = ins.emociones.map(e => `<span class="feel">${esc(e)}</span>`).join("");
+    $("insSituation").textContent = ins.situacion ? "Situación: " + ins.situacion : "";
+    $("insExplain").textContent = ins.explicacion;
+    $("insNeed").textContent = ins.necesidad ? "Lo que podrías necesitar: " + ins.necesidad : "";
+    $("insSupport").innerHTML = ins.apoyo.map(a => `<li>${esc(a)}</li>`).join("");
+    const risk = KnowledgeBaseEngine.riskMessage(ins.riesgo);
+    $("insRisk").textContent = risk; $("insRisk").classList.toggle("hidden", !risk);
     $("kbDiag").textContent = "Diagnóstico: " + k.diagnosis;
     $("kbRec").textContent = k.recommendation;
     $("kbRules").textContent = "Motor: " + source + " · Regla aplicada: " + k.ruleUsed + " · Reglas activadas: " + k.rulesFired.join(", ");
